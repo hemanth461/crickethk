@@ -28,7 +28,7 @@ function App() {
       <Footer />
       
       {/* Vercel Analytics tracking tag */}
-      <Analytics />
+      <Analytics mode="production" />
     </div>
   )
 }
