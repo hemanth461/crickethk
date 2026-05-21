@@ -12,29 +12,29 @@ export default function CategoryNews() {
   const categoryMap = {
     'ipl-news': {
       title: 'IPL News',
-      sanityValue: 'IPL News',
+      sanityValues: ['IPL News', 'IPL', 'Rumors'],
       mockCategories: ['IPL Rumors', 'IPL 2026', 'IPL News']
     },
     'international-cricket': {
       title: 'International Cricket',
-      sanityValue: 'International Cricket',
+      sanityValues: ['International Cricket', 'International', 'General'],
       mockCategories: ['Test Cricket', 'International', 'ICC News', 'International Cricket']
     },
     'injury-news': {
       title: 'Injury News',
-      sanityValue: 'Injury News',
+      sanityValues: ['Injury News', 'Injury Update'],
       mockCategories: ['Injury Update', 'Injury News']
     },
     'squad-news': {
       title: 'Squad News',
-      sanityValue: 'Squad News',
+      sanityValues: ['Squad News', 'Squads', 'Squad Announcement'],
       mockCategories: ['Squad Reveal', 'Domestic', 'Squad News', 'Squads']
     }
   }
 
   const currentCategory = categoryMap[categoryName] || {
     title: categoryName ? categoryName.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'News',
-    sanityValue: categoryName,
+    sanityValues: [categoryName],
     mockCategories: []
   }
 
@@ -121,8 +121,8 @@ export default function CategoryNews() {
     async function fetchCategoryPosts() {
       try {
         setLoading(true)
-        // Fetch posts matching the category value from Sanity, ordered by date
-        const query = `*[_type == "post" && category == $catVal] | order(publishedAt desc) {
+        // Fetch posts matching any of the category values in Sanity, ordered by date
+        const query = `*[_type == "post" && category in $catVals] | order(publishedAt desc) {
           _id,
           title,
           slug,
@@ -131,7 +131,7 @@ export default function CategoryNews() {
           mainImage,
           category
         }`
-        const fetchedPosts = await client.fetch(query, { catVal: currentCategory.sanityValue })
+        const fetchedPosts = await client.fetch(query, { catVals: currentCategory.sanityValues })
         if (fetchedPosts && fetchedPosts.length > 0) {
           setPosts(fetchedPosts)
         } else {
