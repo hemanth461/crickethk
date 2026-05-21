@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Search, UserCheck, Calendar, MapPin, Award, Users } from 'lucide-react'
+import { client, urlFor } from '../sanityClient'
 
 // Squad data structured with names, roles, and designation tags
 const testSquad = [
@@ -42,6 +43,8 @@ export default function SquadInfo() {
   const [activeTab, setActiveTab] = useState('test') // 'test' or 'odi'
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRole, setSelectedRole] = useState('All') // 'All', 'Batsman', 'All-rounder', 'Bowler', 'Wicketkeeper'
+  const [sanityPlayers, setSanityPlayers] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     document.title = "India vs Afghanistan Squad Announcements | CricketHK"
@@ -49,17 +52,68 @@ export default function SquadInfo() {
     if (metaDescription) {
       metaDescription.setAttribute('content', "Check India's Test and ODI squads for the upcoming bilateral series against Afghanistan. Get complete player lists and team combinations.")
     }
+
+    async function fetchPlayers() {
+      try {
+        setLoading(true)
+        const query = `*[_type == "player"] {
+          name,
+          role,
+          squad,
+          country,
+          image,
+          tag,
+          stats
+        }`
+        const fetched = await client.fetch(query)
+        if (fetched && fetched.length > 0) {
+          setSanityPlayers(fetched)
+        }
+      } catch (err) {
+        console.error('Error fetching players from Sanity:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPlayers()
   }, [])
 
-  const currentSquadList = activeTab === 'test' ? testSquad : odiSquad
+  // Map active tab squad list
+  const currentSquadList = useMemo(() => {
+    if (sanityPlayers.length > 0) {
+      return sanityPlayers.filter(player => {
+        const squadLower = (player.squad || '').toLowerCase()
+        if (activeTab === 'test') {
+          return squadLower === 'test' || squadLower === 'both'
+        } else {
+          return squadLower === 'odi' || squadLower === 'both'
+        }
+      })
+    }
+    return activeTab === 'test' ? testSquad : odiSquad
+  }, [sanityPlayers, activeTab])
 
   // Dynamic metrics of currently selected squad
   const metrics = useMemo(() => {
     const total = currentSquadList.length
-    const batsmen = currentSquadList.filter(p => p.role.includes('Batsman') && !p.role.includes('Wicketkeeper')).length
-    const allRounders = currentSquadList.filter(p => p.role.includes('All-rounder')).length
-    const bowlers = currentSquadList.filter(p => p.role.includes('Bowler')).length
-    const wks = currentSquadList.filter(p => p.role.includes('Wicketkeeper') || p.tag === 'wk').length
+    const batsmen = currentSquadList.filter(p => {
+      const roleLower = (p.role || '').toLowerCase()
+      return (roleLower.includes('batsman') || roleLower.includes('batter')) && !roleLower.includes('wicketkeeper')
+    }).length
+    const allRounders = currentSquadList.filter(p => {
+      const roleLower = (p.role || '').toLowerCase()
+      return roleLower.includes('all-rounder') || roleLower.includes('all-round')
+    }).length
+    const bowlers = currentSquadList.filter(p => {
+      const roleLower = (p.role || '').toLowerCase()
+      return roleLower.includes('bowler')
+    }).length
+    const wks = currentSquadList.filter(p => {
+      const roleLower = (p.role || '').toLowerCase()
+      const tagLower = (p.tag || '').toLowerCase()
+      return roleLower.includes('wicketkeeper') || tagLower === 'wk'
+    }).length
     
     return { total, batsmen, allRounders, bowlers, wks }
   }, [currentSquadList])
@@ -71,12 +125,17 @@ export default function SquadInfo() {
       
       let matchesRole = true
       if (selectedRole !== 'All') {
+        const roleLower = (player.role || '').toLowerCase()
+        const tagLower = (player.tag || '').toLowerCase()
+
         if (selectedRole === 'Wicketkeeper') {
-          matchesRole = player.role.includes('Wicketkeeper') || player.tag === 'wk'
+          matchesRole = roleLower.includes('wicketkeeper') || tagLower === 'wk'
         } else if (selectedRole === 'Batsman') {
-          matchesRole = player.role.includes('Batsman') && !player.role.includes('Wicketkeeper')
-        } else {
-          matchesRole = player.role.includes(selectedRole)
+          matchesRole = (roleLower.includes('batsman') || roleLower.includes('batter')) && !roleLower.includes('wicketkeeper')
+        } else if (selectedRole === 'All-rounder') {
+          matchesRole = roleLower.includes('all-rounder') || roleLower.includes('all-round')
+        } else if (selectedRole === 'Bowler') {
+          matchesRole = roleLower.includes('bowler')
         }
       }
       
@@ -95,7 +154,8 @@ export default function SquadInfo() {
 
   // Helper to format designation tag display names
   const getTagClass = (tag) => {
-    switch (tag) {
+    const tagVal = (tag || '').toLowerCase()
+    switch (tagVal) {
       case 'captain': return 'player-role-badge role-captain';
       case 'vice-captain': return 'player-role-badge role-vc';
       case 'wk': return 'player-role-badge role-wk';
@@ -104,9 +164,10 @@ export default function SquadInfo() {
   }
 
   const getTagLabel = (tag, role) => {
-    if (tag === 'captain') return 'Captain';
-    if (tag === 'vice-captain') return 'Vice-Captain';
-    if (tag === 'wk') return 'WK-Batsman';
+    const tagVal = (tag || '').toLowerCase()
+    if (tagVal === 'captain') return 'Captain';
+    if (tagVal === 'vice-captain') return 'Vice-Captain';
+    if (tagVal === 'wk') return 'WK-Batsman';
     return role;
   }
 
@@ -118,7 +179,7 @@ export default function SquadInfo() {
           <span className="squad-page-subtitle">Tour Announcement</span>
           <h1 className="squad-page-title">India vs Afghanistan Series</h1>
           <div className="squad-meta-tags">
-            <span><Users size={16} /> 15-Member Squads</span>
+            <span><Users size={16} /> {currentSquadList.length}-Member Squad</span>
             <span><Award size={16} /> Tour 2026</span>
             <span><MapPin size={16} /> Indian Subcontinent</span>
           </div>
@@ -219,9 +280,17 @@ export default function SquadInfo() {
           {filteredPlayers.length > 0 ? (
             filteredPlayers.map((player, idx) => (
               <div key={idx} className="player-card">
-                <div className="player-avatar-placeholder">
-                  {getInitials(player.name)}
-                </div>
+                {player.image ? (
+                  <img 
+                    src={urlFor(player.image).url()} 
+                    alt={player.name} 
+                    style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <div className="player-avatar-placeholder">
+                    {getInitials(player.name)}
+                  </div>
+                )}
                 <div className="player-info">
                   <span className="player-name">{player.name}</span>
                   <span className={getTagClass(player.tag)}>
@@ -241,3 +310,4 @@ export default function SquadInfo() {
     </div>
   )
 }
+

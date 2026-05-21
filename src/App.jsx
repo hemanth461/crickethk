@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import SquadInfo from './pages/SquadInfo'
 import TradeRumors from './pages/TradeRumors'
+import ArticleDetail from './pages/ArticleDetail'
 import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 
@@ -19,10 +20,12 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/squad" element={<SquadInfo />} />
           <Route path="/trade-rumors" element={<TradeRumors />} />
+          <Route path="/news/:slug" element={<ArticleDetail />} />
           {/* Fallback route */}
           <Route path="*" element={<Home />} />
         </Routes>
       </main>
+
 
       {/* Shared Footer */}
       <Footer />
