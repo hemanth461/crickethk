@@ -4,6 +4,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import SquadInfo from './pages/SquadInfo'
 import TradeRumors from './pages/TradeRumors'
+import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 
 function App() {
@@ -25,6 +26,9 @@ function App() {
 
       {/* Shared Footer */}
       <Footer />
+      
+      {/* Vercel Analytics tracking tag */}
+      <Analytics />
     </div>
   )
 }
