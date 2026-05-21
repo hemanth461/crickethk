@@ -47,11 +47,10 @@ export default {
       type: 'string',
       options: {
         list: [
-          { title: 'Breaking News', value: 'Breaking News' },
-          { title: 'IPL News', value: 'IPL' },
-          { title: 'Squad Announcement', value: 'Squads' },
-          { title: 'Trade Rumors', value: 'Rumors' },
-          { title: 'General News', value: 'General' },
+          { title: 'IPL News', value: 'IPL News' },
+          { title: 'International Cricket', value: 'International Cricket' },
+          { title: 'Injury News', value: 'Injury News' },
+          { title: 'Squad News', value: 'Squad News' },
         ],
       },
       validation: Rule => Rule.required(),

@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import SquadInfo from './pages/SquadInfo'
 import TradeRumors from './pages/TradeRumors'
 import ArticleDetail from './pages/ArticleDetail'
+import CategoryNews from './pages/CategoryNews'
 import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="/squad" element={<SquadInfo />} />
           <Route path="/trade-rumors" element={<TradeRumors />} />
           <Route path="/news/:slug" element={<ArticleDetail />} />
+          <Route path="/category/:categoryName" element={<CategoryNews />} />
           {/* Fallback route */}
           <Route path="*" element={<Home />} />
         </Routes>

@@ -118,6 +118,75 @@ export default function Home() {
   const heroPost = hasSanityData ? posts[0] : null
   const gridNews = hasSanityData ? posts.slice(1) : mockNews
 
+  // Build dynamic trending topics list (up to 4 items)
+  // We want to use posts.slice(1, 5) if they exist.
+  // If there are fewer than 4 posts to display from Sanity, we fill in with mock topics that do not duplicate the active posts' titles.
+  const getTrendingTopics = () => {
+    let list = []
+    
+    // 1. Add sanity posts starting from index 1 (excluding hero)
+    if (posts.length > 1) {
+      list = posts.slice(1, 5).map(post => ({
+        id: post._id,
+        category: post.category || 'News',
+        title: post.title,
+        to: `/news/${post.slug.current}`,
+        isSanity: true
+      }))
+    }
+    
+    // 2. Fill the remaining spots with mock items, avoiding titles that match hero or other list items
+    const activeTitles = [
+      ...(heroPost ? [heroPost.title.toLowerCase()] : []),
+      ...list.map(item => item.title.toLowerCase())
+    ]
+    
+    const mockTopics = [
+      {
+        id: 'mock-trend-1',
+        category: 'Squads',
+        title: 'India vs Afghanistan Test & ODI squads announced. Shubman Gill named captain!',
+        to: '/squad'
+      },
+      {
+        id: 'mock-trend-2',
+        category: 'IPL 2026',
+        title: "Inside Mumbai Indians' bottom-tier campaign: What went wrong for Hardik Pandya?",
+        to: '/trade-rumors'
+      },
+      {
+        id: 'mock-trend-3',
+        category: 'BCCI Updates',
+        title: 'Domestic stars Harsh Dubey and Gurnoor Brar receive maiden callups.',
+        to: '#'
+      },
+      {
+        id: 'mock-trend-4',
+        category: 'International',
+        title: 'WTC Final preparations kick off as team management leaves for London early.',
+        to: '#'
+      }
+    ]
+    
+    for (const mock of mockTopics) {
+      if (list.length >= 4) break
+      // Check if it's already shown as hero or trending
+      if (!activeTitles.includes(mock.title.toLowerCase())) {
+        list.push({
+          id: mock.id,
+          category: mock.category,
+          title: mock.title,
+          to: mock.to,
+          isSanity: false
+        })
+      }
+    }
+    
+    return list
+  }
+
+  const trendingTopics = getTrendingTopics()
+
   // Format date helper
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -166,33 +235,20 @@ export default function Home() {
               <TrendingUp size={20} className="text-brand-green" /> Trending Topics
             </h3>
             
-            <div className="sidebar-item">
-              <span className="sidebar-tag">Squads</span>
-              <Link to="/squad" className="sidebar-link-title">
-                India vs Afghanistan Test & ODI squads announced. Shubman Gill named captain!
-              </Link>
-            </div>
-
-            <div className="sidebar-item">
-              <span className="sidebar-tag">IPL 2026</span>
-              <Link to="/trade-rumors" className="sidebar-link-title">
-                Inside Mumbai Indians' bottom-tier campaign: What went wrong for Hardik Pandya?
-              </Link>
-            </div>
-
-            <div className="sidebar-item">
-              <span className="sidebar-tag">BCCI Updates</span>
-              <a href="#" className="sidebar-link-title" onClick={(e) => e.preventDefault()}>
-                Domestic stars Harsh Dubey and Gurnoor Brar receive maiden callups.
-              </a>
-            </div>
-            
-            <div className="sidebar-item">
-              <span className="sidebar-tag">International</span>
-              <a href="#" className="sidebar-link-title" onClick={(e) => e.preventDefault()}>
-                WTC Final preparations kick off as team management leaves for London early.
-              </a>
-            </div>
+            {trendingTopics.map((item) => (
+              <div key={item.id} className="sidebar-item">
+                <span className="sidebar-tag">{item.category}</span>
+                {item.to === '#' ? (
+                  <a href="#" className="sidebar-link-title" onClick={(e) => e.preventDefault()}>
+                    {item.title}
+                  </a>
+                ) : (
+                  <Link to={item.to} className="sidebar-link-title">
+                    {item.title}
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
