@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:cms": "sanity dev",
-    "build": "vite build",
+    "build": "vite build && node generate-sitemap.js",
     "build:cms": "sanity build",
     "lint": "eslint .",
     "preview": "vite preview"
